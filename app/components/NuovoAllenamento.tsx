@@ -40,31 +40,33 @@ export default function NuovoAllenamento({ onTorna }: Props) {
   }
 
   const iniziaAllenamento = async (nome: string) => {
-    let alId = allenamentoId
-    if (!alId) {
-      const { data, error } = await supabase
-        .from('allenamenti')
-        .insert({ note: '' })
-        .select()
-        .single()
-      if (error || !data) return
-      alId = data.id
-      setAllenamentoId(alId)
-    }
+  let alId = allenamentoId
+  if (!alId) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
     const { data, error } = await supabase
-      .from('esercizi')
-      .insert({ allenamento_id: alId, nome })
+      .from('allenamenti')
+      .insert({ note: '', user_id: user.id })
       .select()
       .single()
     if (error || !data) return
-
-    setEsercizioId(data.id)
-    setSerie([])
-    setEsercizioInCorso(true)
-    setSuggerimenti([])
+    alId = data.id
+    setAllenamentoId(alId)
   }
 
+  const { data, error } = await supabase
+    .from('esercizi')
+    .insert({ allenamento_id: alId, nome })
+    .select()
+    .single()
+  if (error || !data) return
+
+  setEsercizioId(data.id)
+  setSerie([])
+  setEsercizioInCorso(true)
+  setSuggerimenti([])
+}
   const aggiungiSerie = async () => {
     const p = parseFloat(peso)
     const r = parseInt(ripetizioni)
